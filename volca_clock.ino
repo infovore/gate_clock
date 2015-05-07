@@ -12,6 +12,7 @@ int pulseState = LOW;
 float tempo = 120.0;      // in bpm
 int swing = 0;            // percentage
 long oldPosition = -999;
+long quaver = 0;
 
 long pulseDuration = 50;  // how long is the pulse in ms?
 
@@ -46,17 +47,11 @@ void loop()
   long newPosition = myEnc.read();
   if(newPosition > oldPosition) {
     tempo = tempo + 0.5;
-
-    updateIntervals();
-
     Serial.println(tempo);
   }
 
   if(newPosition < oldPosition) {
     tempo = tempo - 0.5;
-
-    updateIntervals();
-
     Serial.println(tempo);
   }
 
@@ -80,19 +75,41 @@ void loop()
     if (digitalRead(pulsePin)) {
       digitalWrite(pulsePin, LOW);
       nextPulse = currentTime + pulseOffInterval;
+
     } else {
       digitalWrite(pulsePin, HIGH);
+      quaver++;
       nextPulse = currentTime + pulseDuration;
     }
   }
+  updateIntervals();
 } 
 
 void updateIntervals() {
   // first, calculate the interval between flashes in ms
   blinkInterval = 60 * 1000 / tempo;
-
-  // pulse interval is half that, because the Volca syncs on a quaver beat.
-  pulseInterval = blinkInterval / 2;
+  
+  if(swing > 0) {
+     // pulse interval is half that, because the Volca syncs on a quaver beat.
+    pulseInterval = blinkInterval / 2;
+    
+    // and now we skew it according to swing
+    if((quaver % 2) > 0) {
+      // lengthen it
+      float swingScale = 4.0;
+      float swingRatio = 1 + (swing / (100.0 * swingScale));
+      pulseInterval = pulseInterval * swingRatio;
+      Serial.println(swingRatio);
+    } else {
+      // shorten
+      float swingRatio = 1 - (swing / 100.0); // swing is out of 50, we need it between 0 and 0.5
+      pulseInterval = pulseInterval * swingRatio;
+      Serial.println(swingRatio);
+    }
+  } else {
+    // pulse interval is half that, because the Volca syncs on a quaver beat.
+    pulseInterval = blinkInterval / 2;
+  }
 
   blinkOffInterval = blinkInterval - pulseDuration;
   pulseOffInterval = pulseInterval - pulseDuration;
