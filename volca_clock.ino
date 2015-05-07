@@ -1,46 +1,39 @@
 #include <Encoder.h>
 
-Encoder myEnc(5, 6);
+Encoder myEnc(5, 6);      // Encoder on pins 5/6
 
-const int ledPin =  13;      // the number of the LED pin
-const int pulsePin = 11;      // the number of the LED pin
-const int potPin = 15;
+const int ledPin =  13;   // pin for the LED that blinks at tempo
+const int pulsePin = 11;  // pin for the gate pulse out
+const int potPin = 15;    // pin for swing potentiometer in
 
-// Variables will change:
-int ledState = LOW;             // ledState used to set the LED
-int pulseState = LOW;             // ledState used to set the LED
+int ledState = LOW;
+int pulseState = LOW;
 
-float tempo = 120.0;
-int swing = 0.0;
+float tempo = 120.0;      // in bpm
+int swing = 0;            // percentage
 long oldPosition = -999;
 
-// the follow variables is a long because the time, measured in miliseconds,
-// will quickly become a bigger number than can be stored in an int.
-
-long pulseDuration = 50;
+long pulseDuration = 50;  // how long is the pulse in ms?
 
 long blinkInterval;
 long pulseInterval;
 long blinkOffInterval;
 long pulseOffInterval;
-
-
 long nextBlink;
 long nextPulse;
 
 void setup() {
-  // set the digital pin as output:
-  Serial.begin(9600);
   pinMode(ledPin, OUTPUT);      
   pinMode(pulsePin, OUTPUT);      
-  Serial.println(tempo);
   updateIntervals();
+
+  Serial.begin(9600);
+  Serial.println(tempo);
 }
 
 void loop()
 {
-  // here is where you'd put code that needs to be running all the time.
-  
+  // read swing from potentiometer
   int newSwingVal = analogRead(potPin);
   newSwingVal = map(newSwingVal, 0, 1023, 0, 100);
 
@@ -48,16 +41,17 @@ void loop()
     swing = newSwingVal;
     Serial.println(swing);
   }
-  
+
+  // read encoder and update tempo if necessary
   long newPosition = myEnc.read();
   if(newPosition > oldPosition) {
     tempo = tempo + 0.5;
-    
+
     updateIntervals();
 
     Serial.println(tempo);
   }
-  
+
   if(newPosition < oldPosition) {
     tempo = tempo - 0.5;
 
@@ -65,36 +59,42 @@ void loop()
 
     Serial.println(tempo);
   }
-  
+
   oldPosition = newPosition;
-  
+
+  // now work out whether or not to blink / pulse
+  //
   long currentTime = millis();
-  
+
   if (currentTime > nextBlink) {
     if (digitalRead(ledPin)) {
       digitalWrite(ledPin, LOW);
       nextBlink = currentTime + blinkOffInterval;
-     } else {
-       digitalWrite(ledPin, HIGH);
-       nextBlink = currentTime + pulseDuration;
-     }
+    } else {
+      digitalWrite(ledPin, HIGH);
+      nextBlink = currentTime + pulseDuration;
+    }
   }
-  
+
   if (currentTime > nextPulse) {
     if (digitalRead(pulsePin)) {
       digitalWrite(pulsePin, LOW);
       nextPulse = currentTime + pulseOffInterval;
-     } else {
-       digitalWrite(pulsePin, HIGH);
-       nextPulse = currentTime + pulseDuration;
-     }
+    } else {
+      digitalWrite(pulsePin, HIGH);
+      nextPulse = currentTime + pulseDuration;
+    }
   }
 } 
 
 void updateIntervals() {
-    blinkInterval = 60 * 1000 / tempo;
-    pulseInterval = blinkInterval / 2;
-    blinkOffInterval = blinkInterval - pulseDuration;
-    pulseOffInterval = pulseInterval - pulseDuration;
+  // first, calculate the interval between flashes in ms
+  blinkInterval = 60 * 1000 / tempo;
+
+  // pulse interval is half that, because the Volca syncs on a quaver beat.
+  pulseInterval = blinkInterval / 2;
+
+  blinkOffInterval = blinkInterval - pulseDuration;
+  pulseOffInterval = pulseInterval - pulseDuration;
 }
 
