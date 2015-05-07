@@ -17,4 +17,10 @@ Starts at 120bpm. LED will blink for 50ms once per beat (quarter note). Mono jac
 
 Rotate the encoder to adjust the tempo.
 
-The poteniometer does its best to apply something approximating swing, but because the volca is clocked on 8ths, it's a bit rubbish. Sorry.
+The poteniometer does its best to apply something approximating swing, but because the Volca is clocked on 8ths, it's a bit rubbish. Sorry.
+
+It'd probably also work with anything else.
+
+## Next steps
+
+I'd like some CV out too.
