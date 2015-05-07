@@ -3,13 +3,15 @@
 Encoder myEnc(5, 6);
 
 const int ledPin =  13;      // the number of the LED pin
-const int pulsePin =  11;      // the number of the LED pin
+const int pulsePin = 11;      // the number of the LED pin
+const int potPin = 15;
 
 // Variables will change:
 int ledState = LOW;             // ledState used to set the LED
 int pulseState = LOW;             // ledState used to set the LED
 
 float tempo = 120.0;
+int swing = 0.0;
 long oldPosition = -999;
 
 // the follow variables is a long because the time, measured in miliseconds,
@@ -30,14 +32,22 @@ void setup() {
   // set the digital pin as output:
   Serial.begin(9600);
   pinMode(ledPin, OUTPUT);      
-    pinMode(pulsePin, OUTPUT);      
-      Serial.println(tempo);
+  pinMode(pulsePin, OUTPUT);      
+  Serial.println(tempo);
   updateIntervals();
 }
 
 void loop()
 {
   // here is where you'd put code that needs to be running all the time.
+  
+  int newSwingVal = analogRead(potPin);
+  newSwingVal = map(newSwingVal, 0, 1023, 0, 100);
+
+  if(newSwingVal != swing) {
+    swing = newSwingVal;
+    Serial.println(swing);
+  }
   
   long newPosition = myEnc.read();
   if(newPosition > oldPosition) {
